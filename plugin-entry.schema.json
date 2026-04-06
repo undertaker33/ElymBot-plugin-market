@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AstrBot Android Plugin Market Entry",
+  "type": "object",
+  "required": [
+    "pluginId",
+    "title",
+    "author",
+    "description",
+    "entrySummary",
+    "versions"
+  ],
+  "properties": {
+    "pluginId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "entrySummary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repoUrl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "versions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/pluginVersion"
+      }
+    }
+  },
+  "$defs": {
+    "pluginVersion": {
+      "type": "object",
+      "required": [
+        "version",
+        "packageUrl",
+        "minHostVersion"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageUrl": {
+          "type": "string",
+          "minLength": 1
+        },
+        "publishedAt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "protocolVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minHostVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maxHostVersion": {
+          "type": "string"
+        },
+        "changelog": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/permission"
+          }
+        }
+      }
+    },
+    "permission": {
+      "type": "object",
+      "required": [
+        "permissionId",
+        "title",
+        "description"
+      ],
+      "properties": {
+        "permissionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "riskLevel": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

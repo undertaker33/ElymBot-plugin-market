@@ -1,0 +1,70 @@
+name: Catalog
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Reject direct catalog.json edits in pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          changed="$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- catalog.json)"
+          if [ -n "$changed" ]; then
+            echo "::error::Do not edit catalog.json directly. Submit or update plugins/<pluginId>.json instead."
+            exit 1
+          fi
+
+      - name: Run catalog unit tests
+        run: python -m unittest tests.test_build_catalog
+
+      - name: Build generated catalog
+        run: python scripts/build_catalog.py --repo-root . --output catalog.generated.json
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Rebuild catalog.json
+        run: python scripts/build_catalog.py --repo-root . --output catalog.json
+
+      - name: Commit generated catalog if changed
+        run: |
+          if git diff --quiet -- catalog.json; then
+            echo "catalog.json already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add catalog.json
+          git commit -m "chore: regenerate catalog"
+          git push
