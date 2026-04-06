@@ -1,0 +1,3 @@
+# Keep the central index repository clean.
+.DS_Store
+Thumbs.db
