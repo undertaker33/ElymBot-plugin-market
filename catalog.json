@@ -7,7 +7,7 @@
     {
       "pluginId": "cc.astrbot.android.plugin.meme_manager.native",
       "title": "表情管理器 Android Native",
-      "author": "untarz",
+      "author": "93445",
       "description": "AstrBot Android Native QuickJS 外部插件：迁移桌面端表情包回复链路、/表情管理 指令和内置 memes 资源。",
       "entrySummary": "支持聊天触发表情图回复，并保留 /表情管理 命令入口与资源统计能力。",
       "repoUrl": "https://github.com/undertaker33/astrbot_android_plugin_memes",
