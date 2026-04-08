@@ -2,20 +2,62 @@ import argparse
 import copy
 import datetime as dt
 import json
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
+import os
 
 
 DEFAULT_CATALOG_URL = (
     "https://raw.githubusercontent.com/undertaker33/"
     "astrbot-android-plugin-market/main/catalog.json"
 )
+DEFAULT_PROTOCOL_VERSION = 1
 
 
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def require_non_blank_string(value: object, field_name: str, *, context: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{context} is missing required non-blank field {field_name!r}")
+    return value.strip()
+
+
+def validate_plugin_version(version: dict, *, plugin_id: str, index: int) -> None:
+    context = f"plugins/{plugin_id}.json versions[{index}]"
+    require_non_blank_string(version.get("version"), "version", context=context)
+    require_non_blank_string(version.get("packageUrl"), "packageUrl", context=context)
+    require_non_blank_string(version.get("minHostVersion"), "minHostVersion", context=context)
+
+    published_at = version.get("publishedAt")
+    if published_at is not None and (not isinstance(published_at, int) or published_at < 0):
+        raise ValueError(f"{context} has invalid publishedAt {published_at!r}")
+
+
+def validate_plugin_entry(entry: dict, path: Path) -> None:
+    plugin_id = require_non_blank_string(entry.get("pluginId"), "pluginId", context=str(path))
+    for field_name in ("title", "author", "description", "entrySummary"):
+        require_non_blank_string(entry.get(field_name), field_name, context=f"plugins/{plugin_id}.json")
+
+    versions = entry.get("versions")
+    if not isinstance(versions, list) or not versions:
+        raise ValueError(f"plugins/{plugin_id}.json must define a non-empty versions list")
+    for index, version in enumerate(versions):
+        if not isinstance(version, dict):
+            raise ValueError(f"plugins/{plugin_id}.json versions[{index}] must be an object")
+        validate_plugin_version(version, plugin_id=plugin_id, index=index)
+
+    scenarios = entry.get("scenarios", [])
+    if not isinstance(scenarios, list):
+        raise ValueError(f"plugins/{plugin_id}.json scenarios must be a list")
+    for index, scenario in enumerate(scenarios):
+        require_non_blank_string(
+            scenario,
+            f"scenarios[{index}]",
+            context=f"plugins/{plugin_id}.json",
+        )
 
 
 def load_plugin_entries(plugins_dir: Path) -> list[dict]:
@@ -27,6 +69,7 @@ def load_plugin_entries(plugins_dir: Path) -> list[dict]:
                 f"Plugin entry filename mismatch: {path.name} does not match "
                 f"pluginId {entry.get('pluginId')!r}"
             )
+        validate_plugin_entry(entry, path)
         entries.append(entry)
     return entries
 
@@ -77,7 +120,15 @@ def fetch_release_published_at_millis(package_url: str) -> int:
 def hydrate_plugin_entries(entries: list[dict]) -> list[dict]:
     hydrated = copy.deepcopy(entries)
     for entry in hydrated:
+        repo_url = entry.get("repoUrl")
+        if isinstance(repo_url, str) and repo_url.strip() and not entry.get("repositoryUrl"):
+            entry["repositoryUrl"] = repo_url.strip()
+
         for version in entry.get("versions", []):
+            version.setdefault("protocolVersion", DEFAULT_PROTOCOL_VERSION)
+            version.setdefault("maxHostVersion", "")
+            version.setdefault("permissions", [])
+            version.setdefault("changelog", "")
             published_at = version.get("publishedAt")
             if isinstance(published_at, int) and published_at > 0:
                 continue

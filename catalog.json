@@ -26,7 +26,8 @@
           "permissions": [],
           "changelog": "Initial public Android Native market release."
         }
-      ]
+      ],
+      "repositoryUrl": "https://github.com/undertaker33/astrbot_android_plugin_memes"
     }
   ]
 }

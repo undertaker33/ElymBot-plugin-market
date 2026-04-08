@@ -117,6 +117,88 @@ class BuildCatalogTest(unittest.TestCase):
             "https://github.com/example/demo-plugin/releases/download/v1/demo.zip"
         )
 
+    def test_hydrate_adds_repository_url_alias_and_version_defaults(self) -> None:
+        entries = [
+            {
+                "pluginId": "cc.astrbot.android.plugin.demo",
+                "title": "Demo Plugin",
+                "author": "tester",
+                "description": "A demo plugin entry.",
+                "entrySummary": "Demo summary.",
+                "repoUrl": "https://github.com/example/demo-plugin",
+                "versions": [
+                    {
+                        "version": "1.0.0",
+                        "packageUrl": "https://github.com/example/demo-plugin/releases/download/v1/demo.zip",
+                        "publishedAt": 1776000000000,
+                        "minHostVersion": "0.4.0",
+                    }
+                ],
+            }
+        ]
+
+        hydrated = build_catalog.hydrate_plugin_entries(entries)
+
+        self.assertEqual(
+            hydrated[0]["repositoryUrl"],
+            "https://github.com/example/demo-plugin",
+        )
+        self.assertEqual(hydrated[0]["versions"][0]["protocolVersion"], 1)
+        self.assertEqual(hydrated[0]["versions"][0]["maxHostVersion"], "")
+        self.assertEqual(hydrated[0]["versions"][0]["permissions"], [])
+        self.assertEqual(hydrated[0]["versions"][0]["changelog"], "")
+
+    def test_load_plugin_entries_rejects_filename_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            plugins_dir = Path(temp_dir)
+            (plugins_dir / "wrong-name.json").write_text(
+                json.dumps(
+                    {
+                        "pluginId": "cc.astrbot.android.plugin.demo",
+                        "title": "Demo Plugin",
+                        "author": "tester",
+                        "description": "A demo plugin entry.",
+                        "entrySummary": "Demo summary.",
+                        "versions": [
+                            {
+                                "version": "1.0.0",
+                                "packageUrl": "https://github.com/example/demo-plugin/releases/download/v1/demo.zip",
+                                "publishedAt": 1776000000000,
+                                "minHostVersion": "0.4.0",
+                            }
+                        ],
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "filename mismatch"):
+                build_catalog.load_plugin_entries(plugins_dir)
+
+    def test_hydrate_requires_published_at_for_non_release_download_urls(self) -> None:
+        entries = [
+            {
+                "pluginId": "cc.astrbot.android.plugin.demo",
+                "title": "Demo Plugin",
+                "author": "tester",
+                "description": "A demo plugin entry.",
+                "entrySummary": "Demo summary.",
+                "repoUrl": "https://github.com/example/demo-plugin",
+                "versions": [
+                    {
+                        "version": "1.0.0",
+                        "packageUrl": "https://downloads.example.com/demo.zip",
+                        "minHostVersion": "0.4.0",
+                    }
+                ],
+            }
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Missing publishedAt"):
+            build_catalog.hydrate_plugin_entries(entries)
+
 
 if __name__ == "__main__":
     unittest.main()

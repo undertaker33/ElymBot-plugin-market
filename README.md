@@ -75,3 +75,10 @@ The Android client should fetch a direct `catalog.json` URL. It should not use:
 
 - Repository: `https://github.com/undertaker33/astrbot-android-plugin-market`
 - Raw catalog URL: `https://raw.githubusercontent.com/undertaker33/astrbot-android-plugin-market/main/catalog.json`
+
+## Stability Notes
+
+- The Android client should subscribe to the raw `catalog.json` URL above, not the repository homepage.
+- If the client has no repository source yet, it should bootstrap this official raw catalog URL first.
+- `catalog.json` is generated from `plugins/*.json`; contributors should never hand-edit the root file.
+- A plugin version may omit `publishedAt` only when `packageUrl` is a standard GitHub Release download URL.
