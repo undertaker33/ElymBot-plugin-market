@@ -25,6 +25,16 @@
           "permissions": [],
           "changelog": "Initial Android Native plugin market release.",
           "publishedAt": 1776230953000
+        },
+        {
+          "version": "0.3.0",
+          "packageUrl": "https://github.com/undertaker33/ElymBot_plugin_memes/releases/download/v0.3.0/0.3.0.zip",
+          "protocolVersion": 2,
+          "minHostVersion": "0.5.5",
+          "maxHostVersion": "",
+          "permissions": [],
+          "changelog": "修复概率出现的标签无法消除问题",
+          "publishedAt": 1776230953000
         }
       ],
       "repositoryUrl": "https://github.com/undertaker33/ElymBot_plugin_memes"
